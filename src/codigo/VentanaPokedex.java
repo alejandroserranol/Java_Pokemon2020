@@ -9,7 +9,10 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 
 /**
@@ -55,13 +58,12 @@ public class VentanaPokedex extends javax.swing.JFrame {
         
         try{
             Class.forName("com.mysql.jdbc.Driver");
-            conexion = DriverManager.getConnection("jdbc:mysql://127.0.0.1/pokedex", "root", "root");
+            conexion = DriverManager.getConnection("jdbc:mysql://127.0.0.1/test", "root", "root");
             estado = conexion.createStatement();
         }catch(Exception e){
             System.out.println(e.getMessage());
             System.out.println("Hay un error");
-        }
-        
+        }        
     }
 
     private void dibujaElPokemonQueEstaEnLaPosicion(int posicion){
@@ -71,7 +73,7 @@ public class VentanaPokedex extends javax.swing.JFrame {
         g2.setColor(Color.black);
         g2.fillRect(0, 0, //pinta el fondo del jpanel negro
                 imagenPokemon.getWidth(),
-                imagenPokemon.getHeight()); 
+                imagenPokemon.getHeight());
         g2.drawImage(imagen1,
                 0,  //posicion X inicial dentro del jpanel 
                 0,  // posicion Y inicial dentro del jpanel
@@ -83,8 +85,7 @@ public class VentanaPokedex extends javax.swing.JFrame {
                 fila*96 + 96, //posicion final Y
                 null  //si no lo pones no va
                 );
-        repaint();
-        
+        repaint();        
     }
     
     
@@ -172,11 +173,24 @@ public class VentanaPokedex extends javax.swing.JFrame {
     }//GEN-LAST:event_izqActionPerformed
 
     private void derActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_derActionPerformed
+        
+        dibujaElPokemonQueEstaEnLaPosicion(contador);
+        
+        try {
+            resultadoConsulta = estado.executeQuery("select * from pokemon where id=" + (contador+1));
+            if(resultadoConsulta.next()){
+                nombrePokemon.setText(resultadoConsulta.getString(2)); //las posiciones empiezan en el 1
+            }
+            else {
+                nombrePokemon.setText("Este Pokemon no figura en la Pokedex");
+            }
+        } catch (SQLException ex) {
+        }
+        
         contador ++;
         if (contador >=648){
             contador = 648;
         }
-        dibujaElPokemonQueEstaEnLaPosicion(contador);
     }//GEN-LAST:event_derActionPerformed
 
     /**
