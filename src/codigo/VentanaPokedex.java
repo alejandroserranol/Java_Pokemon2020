@@ -11,6 +11,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
@@ -29,6 +30,9 @@ public class VentanaPokedex extends javax.swing.JFrame {
     Statement estado;
     ResultSet resultadoConsulta;
     Connection conexion;
+    
+    //estructura para guardar todo el contenido de la base de datos de golpe
+    HashMap<String, Pokemon> listaPokemons = new HashMap();
 
     @Override
     public void paint(Graphics g) {
@@ -53,18 +57,36 @@ public class VentanaPokedex extends javax.swing.JFrame {
                     .getResource("/imagenes/black-white.png"));
         } catch (IOException ex) {
         }
+        
+        
 
         buffer1 = (BufferedImage) imagenPokemon.createImage(
                 imagenPokemon.getWidth(),
                 imagenPokemon.getHeight());
         Graphics2D g2 = buffer1.createGraphics();
 
-        dibujaElPokemonQueEstaEnLaPosicion(30);
-
+        dibujaElPokemonQueEstaEnLaPosicion(0);
+        nombrePokemon.setText("Bulbasaur");
+        
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            conexion = DriverManager.getConnection("jdbc:mysql://127.0.0.1/pokedex", "root", "root");
+            conexion = DriverManager.getConnection("jdbc:mysql://127.0.0.1/pokedex", "root", "");
             estado = conexion.createStatement();
+            resultadoConsulta = estado.executeQuery("Select * from pokemon");
+            //recorremos el array del resultado uno a uno para ir cargándolo in el Hashmap
+            
+            while(resultadoConsulta.next()){
+                Pokemon p = new Pokemon();
+                p.nombre = resultadoConsulta.getString("nombre");
+                p.especie = resultadoConsulta.getString("especie");
+                p.movimiento1 = resultadoConsulta.getString("movimiento1");
+                p.peso = resultadoConsulta.getString("peso"); //getDouble si no string
+                p.preEvolucion = resultadoConsulta.getString("preEvolucion"); //getInt si no 
+                p.posEvolucion = resultadoConsulta.getString("posEvolucion");
+                
+                //añado el pokemon recien creado al Hashmap
+                listaPokemons.put(resultadoConsulta.getString("id"), p);
+            }
         } catch (Exception e) {
             System.out.println(e.getMessage());
             System.out.println("Hay un error");
@@ -80,7 +102,7 @@ public class VentanaPokedex extends javax.swing.JFrame {
                 imagenPokemon.getWidth(),
                 imagenPokemon.getHeight());
         g2.drawImage(imagen1,
-                0, //posicion X inicial dentro del jpanel 
+                0, //posicion X inicial dentro del jpanel
                 0, // posicion Y inicial dentro del jpanel
                 imagenPokemon.getWidth(), //ancho del jpanel
                 imagenPokemon.getHeight(), //alto del jpanel
@@ -218,36 +240,34 @@ public class VentanaPokedex extends javax.swing.JFrame {
     private void izqActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_izqActionPerformed
         contadorPokemon--;
         if (contadorPokemon <= 0) {
-            contadorPokemon = 1;
+            contadorPokemon = 0;
         }
+        Pokemon p = listaPokemons.get(String.valueOf(contadorPokemon+1));     
+        if(p != null){
+            nombrePokemon.setText(p.nombre);
+        } else {
+            nombrePokemon.setText("Pokemon NO capturado");
+        }
+        
         dibujaElPokemonQueEstaEnLaPosicion(contadorPokemon);
     }//GEN-LAST:event_izqActionPerformed
 
     private void derActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_derActionPerformed
-
-        dibujaElPokemonQueEstaEnLaPosicion(contadorPokemon);
-        try {
-            resultadoConsulta = estado.executeQuery("select * from pokemon where id=" + (contadorPokemon + 1));
-            if (resultadoConsulta.next()) {
-                nombrePokemon.setOpaque(true);
-                nombrePokemon.setVisible(true);
-                nombrePokemon.setBackground(Color.GRAY);
-                nombrePokemon.setText(resultadoConsulta.getString(2)); //las posiciones empiezan en el 1
-//                etiquetaAltura.setText("Altura");
-//                alturaPokemon.setText(resultadoConsulta.getString(3));
-//                etiquetaPeso.setText("Peso");
-//                pesoPokemon.setText(resultadoConsulta.getString(4));
-//                etiquetaEspecie.setText("Especie");
-//                especiePokemon.setText(resultadoConsulta.getString(5));
-            } else {
-                nombrePokemon.setText("Este Pokemon no figura en la Pokedex");
-            }
-        } catch (SQLException ex) {
-        }
         contadorPokemon++;
+        dibujaElPokemonQueEstaEnLaPosicion(contadorPokemon); //porque en el PNG los pokemon empiezan en el 0 y el 
+        
+        Pokemon p = listaPokemons.get(String.valueOf(contadorPokemon+1));     
+        if(p != null){
+            nombrePokemon.setText(p.nombre);
+        } else {
+            nombrePokemon.setText("Pokemon NO capturado");
+        }
+        
         if (contadorPokemon >= 648) {
             contadorPokemon = 648;
         }
+        
+        
     }//GEN-LAST:event_derActionPerformed
 
     private void izqInfoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_izqInfoActionPerformed
@@ -255,35 +275,35 @@ public class VentanaPokedex extends javax.swing.JFrame {
     }//GEN-LAST:event_izqInfoActionPerformed
 
     private void derInfoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_derInfoActionPerformed
-        if (contadorCaracteristicas < 16) {
-            try {
-                resultadoConsulta = estado.executeQuery("select * from pokemon where id=" + (contadorPokemon));
-                if (resultadoConsulta.next()) {
-                    nombrePokemon.setText(resultadoConsulta.getString(2));
-                    caracteristicas.setVisible(true);
-                    caracteristicas.setBackground(Color.BLACK);
-                    caracteristicas.setText(resultadoConsulta.getString(contadorCaracteristicas));
-                } else {
-                    nombrePokemon.setText("Este Pokemon no figura en la Pokedex");
-                }
-            } catch (SQLException ex) {
-            }
-            contadorCaracteristicas++;
-        } else {
-            try {
-                resultadoConsulta = estado.executeQuery("select * from pokemon where id=" + (contadorPokemon));
-                if (resultadoConsulta.next()) {
-                    nombrePokemon.setText(resultadoConsulta.getString(2));
-                    caracteristicas.setVisible(false);
-                    descripcion.setVisible(true);
-                    descripcion.setBackground(Color.BLACK);
-                    descripcion.setText(resultadoConsulta.getString(contadorCaracteristicas));
-                } else {
-                    nombrePokemon.setText("Este Pokemon no figura en la Pokedex");
-                }
-            } catch (SQLException ex) {
-            }
-        }
+//        if (contadorCaracteristicas < 16) {
+//            try {
+//                resultadoConsulta = estado.executeQuery("select * from pokemon where id=" + (contadorPokemon));
+//                if (resultadoConsulta.next()) {
+//                    nombrePokemon.setText(resultadoConsulta.getString(2));
+//                    caracteristicas.setVisible(true);
+//                    caracteristicas.setBackground(Color.BLACK);
+//                    caracteristicas.setText(resultadoConsulta.getString(contadorCaracteristicas));
+//                } else {
+//                    nombrePokemon.setText("Este Pokemon no figura en la Pokedex");
+//                }
+//            } catch (SQLException ex) {
+//            }
+//            contadorCaracteristicas++;
+//        } else {
+//            try {
+//                resultadoConsulta = estado.executeQuery("select * from pokemon where id=" + (contadorPokemon));
+//                if (resultadoConsulta.next()) {
+//                    nombrePokemon.setText(resultadoConsulta.getString(2));
+//                    caracteristicas.setVisible(false);
+//                    descripcion.setVisible(true);
+//                    descripcion.setBackground(Color.BLACK);
+//                    descripcion.setText(resultadoConsulta.getString(contadorCaracteristicas));
+//                } else {
+//                    nombrePokemon.setText("Este Pokemon no figura en la Pokedex");
+//                }
+//            } catch (SQLException ex) {
+//            }
+//        }
     }//GEN-LAST:event_derInfoActionPerformed
 
     /**
