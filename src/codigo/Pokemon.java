@@ -12,6 +12,7 @@ public class Pokemon {
     public String peso = "";
     public String preEvolucion = "";
     public String posEvolucion = "";
+    public String descripcion = "";
     
     
 }
